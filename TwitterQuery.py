@@ -6,12 +6,13 @@ sys.path.append("../")
 from twitter_credentials import *
 import time
 '''
-Gets twitter analysis of first 5 members of cast and director
+Gets twitter analysis of first member of cast and director
 
 '''
 MAX_TWEETS=100
 
 def get_twitter_imdb_access():
+
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
     

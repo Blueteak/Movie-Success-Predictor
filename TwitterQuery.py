@@ -5,6 +5,7 @@ import sys
 sys.path.append("../")
 from twitter_credentials import *
 import time
+from sklearn.svm import SVC
 '''
 Gets twitter analysis of first member of cast and director
 
@@ -74,9 +75,7 @@ def twitter_search(movie,api,ia):
             max_id = tweets[-1].id
             if count == MAX_TWEETS: break
 
-        if count < MAX_TWEETS:
-            print name,count
-            break
+        #if they don't get to MAX_TWEETS, just assume they did
 
         result.append((pol,sub))
         print name
@@ -89,6 +88,20 @@ def twitter_search(movie,api,ia):
 
 if __name__ == '__main__':
     api,ia = get_twitter_imdb_access()
-    movies = ['The Avengers','Batman v Superman: Dawn of Justice','The Jungle Book','Captain America: Civil War','Star Wars: The Force Awakens']
+    movies = ['The Avengers','Batman v Superman: Dawn of Justice','The Jungle Book','Captain America: The First Avenger','Star Wars: The Force Awakens']
+    clf = SVC()
+    data = []
+    labels = []
     for m in movies:
-        twitter_search(m,api,ia)
+        d = twitter_search(m,api,ia)
+        data.append([d[0][0],d[0][1],d[1][0],d[1][1]])
+        if m == 'Batman v Superman: Dawn of Justice':
+            labels.append(0)
+        else:
+            labels.append(1)
+    
+    clf.fit(data,labels)
+    d = twitter_search('Captain America: Civil War',api,ia)
+    data = []
+    data.append([d[0][0],d[0][1],d[1][0],d[1][1]])
+    print clf.predict(data)

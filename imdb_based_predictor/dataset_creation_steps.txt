@@ -1,0 +1,262 @@
+#Install dependencies for IMDbPY package
+conda install lxml
+
+#Install IMDbPY
+easy_install IMDbPY
+
+#create postgres database
+create db imdb_project
+
+#Download IMDB dataset text files from official IMDB website
+wget -c -P . ftp://ftp.fu-berlin.de/pub/misc/movies/database/*.list.gz
+
+#Create folder for csv files
+mkdir csv_files
+
+#import IMDB data in database
+imdbpy2sql.py -d . -u postgres:imdb_project -c csv_files
+
+#login to the database 
+psql imdb_project
+
+#create table to create dataset with movie features required for machine learning
+CREATE TABLE IF NOT EXISTS movie_info_proj (
+    movie_id integer,
+    title text,
+    mpaa text,
+    country text,
+    budget text,
+    opening_weekend text,
+    gross text,
+    Action integer DEFAULT 0,
+    Animation integer DEFAULT 0,
+    Comedy integer DEFAULT 0,
+    Drama integer DEFAULT 0,
+    Documentary integer DEFAULT 0,
+    Romance integer DEFAULT 0,
+    Short integer DEFAULT 0,
+    Horror integer DEFAULT 0,
+    Thriller integer  DEFAULT 0
+    );
+    
+#Insert the records of type 'movie'(kind_type='movie') with contry information in the new dataset
+#by joining 'title' and 'movie_info' tables on 'movie_id'
+INSERT INTO movie_info_proj(movie_id,title,country) 
+(SELECT 
+title.id,
+title.title,
+movie_info.info
+FROM
+title, movie_info
+WHERE 
+title.id = movie_info.movie_id
+and title.kind_id=1
+and movie_info.info_type_id=8
+);
+
+#Keep records for 'USA' only
+DELETE FROM movie_info_proj WHERE country <> 'USA';
+
+#Update movie info with budget,gross,weekend_gross
+  
+UPDATE movie_info_proj
+	SET budget=REPLACE(movie_info.info,',','')
+	FROM (
+	  SELECT
+	  movie_info.movie_id,
+	  movie_info.info
+	  FROM
+	  movie_info, movie_info_proj
+	  WHERE
+	  movie_info_proj.movie_id = movie_info.movie_id
+	  and movie_info.info_type_id=105
+	  )AS movie_info
+	  WHERE movie_info_proj.movie_id = movie_info.movie_id;
+  
+UPDATE movie_info_proj
+	SET gross=REPLACE(movie_info.info,',','')
+	FROM (
+	  SELECT
+	  movie_info.movie_id,
+	  movie_info.info
+	  FROM
+	  movie_info, movie_info_proj
+	  WHERE
+	  movie_info_proj.movie_id = movie_info.movie_id
+	  and movie_info.info_type_id=107
+	  )AS movie_info
+	  WHERE movie_info_proj.movie_id = movie_info.movie_id;
+    
+UPDATE movie_info_proj
+	 SET opening_weekend=REPLACE(movie_info.info,',','')
+	 FROM (
+	   SELECT
+	   movie_info.movie_id,
+	   movie_info.info
+	   FROM
+	   movie_info, movie_info_proj
+	   WHERE
+	   movie_info_proj.movie_id = movie_info.movie_id
+	   and movie_info.info_type_id=108
+	   )AS movie_info
+	 WHERE movie_info_proj.movie_id = movie_info.movie_id;
+    
+
+UPDATE movie_info_proj
+	 SET mpaa=REPLACE(movie_info.info,',','')
+	 FROM (
+	   SELECT
+	   movie_info.movie_id,
+	   movie_info.info
+	   FROM
+	   movie_info, movie_info_proj
+	   WHERE
+	   movie_info_proj.movie_id = movie_info.movie_id
+	   and movie_info.info_type_id=97
+	   )AS movie_info
+	 WHERE movie_info_proj.movie_id = movie_info.movie_id;
+
+  
+UPDATE movie_info_proj
+	 SET Action=1
+	 FROM (
+	   SELECT
+	   movie_info.movie_id,
+	   movie_info.info
+	   FROM
+	   movie_info, movie_info_proj
+	   WHERE
+	   movie_info_proj.movie_id = movie_info.movie_id
+	   and movie_info.info_type_id=3
+	   and movie_info.info='Action'
+	   )AS movie_info
+	 WHERE movie_info_proj.movie_id = movie_info.movie_id;
+	 
+UPDATE movie_info_proj
+	 SET Animation=1
+	 FROM (
+	   SELECT
+	   movie_info.movie_id,
+	   movie_info.info
+	   FROM
+	   movie_info, movie_info_proj
+	   WHERE
+	   movie_info_proj.movie_id = movie_info.movie_id
+	   and movie_info.info_type_id=3
+	   and movie_info.info='Animation'
+	   )AS movie_info
+	 WHERE movie_info_proj.movie_id = movie_info.movie_id;
+
+UPDATE movie_info_proj
+	 SET Comedy=1
+	 FROM (
+	   SELECT
+	   movie_info.movie_id,
+	   movie_info.info
+	   FROM
+	   movie_info, movie_info_proj
+	   WHERE
+	   movie_info_proj.movie_id = movie_info.movie_id
+	   and movie_info.info_type_id=3
+	   and movie_info.info='Comedy'
+	   )AS movie_info
+	 WHERE movie_info_proj.movie_id = movie_info.movie_id;
+
+UPDATE movie_info_proj
+	 SET Drama=1
+	 FROM (
+	   SELECT
+	   movie_info.movie_id,
+	   movie_info.info
+	   FROM
+	   movie_info, movie_info_proj
+	   WHERE
+	   movie_info_proj.movie_id = movie_info.movie_id
+	   and movie_info.info_type_id=3
+	   and movie_info.info='Drama'
+	   )AS movie_info
+	 WHERE movie_info_proj.movie_id = movie_info.movie_id;
+
+UPDATE movie_info_proj
+	 SET Documentary=1
+	 FROM (
+	   SELECT
+	   movie_info.movie_id,
+	   movie_info.info
+	   FROM
+	   movie_info, movie_info_proj
+	   WHERE
+	   movie_info_proj.movie_id = movie_info.movie_id
+	   and movie_info.info_type_id=3
+	   and movie_info.info='Documentary'
+	   )AS movie_info
+	 WHERE movie_info_proj.movie_id = movie_info.movie_id;
+    
+    UPDATE movie_info_proj
+    	 SET Romance=1
+    	 FROM (
+    	   SELECT
+    	   movie_info.movie_id,
+    	   movie_info.info
+    	   FROM
+    	   movie_info, movie_info_proj
+    	   WHERE
+    	   movie_info_proj.movie_id = movie_info.movie_id
+    	   and movie_info.info_type_id=3
+    	   and movie_info.info='Romance'
+    	   )AS movie_info
+	 WHERE movie_info_proj.movie_id = movie_info.movie_id;
+	 
+        UPDATE movie_info_proj
+        	 SET Short=1
+        	 FROM (
+        	   SELECT
+        	   movie_info.movie_id,
+        	   movie_info.info
+        	   FROM
+        	   movie_info, movie_info_proj
+        	   WHERE
+        	   movie_info_proj.movie_id = movie_info.movie_id
+        	   and movie_info.info_type_id=3
+        	   and movie_info.info='Short'
+        	   )AS movie_info
+	 WHERE movie_info_proj.movie_id = movie_info.movie_id;
+	 
+ UPDATE movie_info_proj
+        	 SET Horror=1
+        	 FROM (
+        	   SELECT
+        	   movie_info.movie_id,
+        	   movie_info.info
+        	   FROM
+        	   movie_info, movie_info_proj
+        	   WHERE
+        	   movie_info_proj.movie_id = movie_info.movie_id
+        	   and movie_info.info_type_id=3
+        	   and movie_info.info='Horror'
+        	   )AS movie_info
+	 WHERE movie_info_proj.movie_id = movie_info.movie_id;
+	 
+ UPDATE movie_info_proj
+        	 SET Thriller=1
+        	 FROM (
+        	   SELECT
+        	   movie_info.movie_id,
+        	   movie_info.info
+        	   FROM
+        	   movie_info, movie_info_proj
+        	   WHERE
+        	   movie_info_proj.movie_id = movie_info.movie_id
+        	   and movie_info.info_type_id=3
+        	   and movie_info.info='Thriller'
+        	   )AS movie_info
+	 WHERE movie_info_proj.movie_id = movie_info.movie_id;
+    
+# Delete rows with null coulmn values
+#DELETE FROM movie_info_proj WHERE mpaa IS NULL or budget IS NULL or opening_weekend IS NULL or gross IS NULL;
+
+# Export table data to CSV
+\COPY movie_info_proj TO 'movie_info.csv' WITH CSV;
+
+# CSV header
+movie_id,title,mpaa,country,budget,opening_weekend,gross,action,animation,comedy,drama,documentary,romance,short,horror,thriller

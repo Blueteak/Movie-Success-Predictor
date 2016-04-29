@@ -72,16 +72,25 @@ def twitter_search(movie,api,ia):
             count = stats[0]
             pol += stats[1]
             sub += stats[2]
-            max_id = tweets[-1].id
+            try:
+                max_id = tweets[-1].id
+            except:
+                break
             if count == MAX_TWEETS: break
 
         #if they don't get to MAX_TWEETS, just assume they did
 
-        result.append((pol,sub))
+        users = api.search_users(q=name)
+        followers = 0
+        if users[0].verified:
+            followers = users[0].followers_count
+
+        result.append((pol,sub,followers))
         print name
         print 'Polarity:\t',pol
         print 'Subjectivity:\t',sub
         print 'Count:\t\t',count
+        print 'Followers:\t',followers
 
     return result
 
@@ -94,14 +103,14 @@ if __name__ == '__main__':
     labels = []
     for m in movies:
         d = twitter_search(m,api,ia)
-        data.append([d[0][0],d[0][1],d[1][0],d[1][1]])
+        data.append([x for y in d for x in y])
         if m == 'Batman v Superman: Dawn of Justice':
             labels.append(0)
         else:
             labels.append(1)
     
     clf.fit(data,labels)
-    d = twitter_search('Captain America: Civil War',api,ia)
+    d = twitter_search('Sharknado',api,ia)
     data = []
-    data.append([d[0][0],d[0][1],d[1][0],d[1][1]])
+    data.append([x for y in d for x in y])
     print clf.predict(data)

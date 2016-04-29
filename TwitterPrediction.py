@@ -12,8 +12,8 @@ movies = None
 api,ia = get_twitter_imdb_access()
 for m in movies:
     d = twitter_search(m,api,ia)
-    d = [d[0][0],d[0][1],d[1][0],d[1][1]]
-    #insert m,actor_polarity,actor_subjectivity,director_polarity,director_subjectivity into table
+    d = [x for y in d for x in y]
+    #insert m,actor_polarity,actor_subjectivity,actor_followers,director_polarity,director_subjectivity,director_followers into table
     #maybe insert label, also
 
 #get all data

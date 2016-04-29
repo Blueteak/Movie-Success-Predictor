@@ -15,8 +15,10 @@ def load_movie_info():
     for line in lines:
         line = line.strip()
         movie_info.append(line.split(','))
-    format_fields(movie_info)
-    return movie_info
+    
+    movie_info = format_fields(movie_info)
+    
+    return movie_info 
 
 def format_fields(movie_info):
     for i in range(0, len(movie_info)):
@@ -64,12 +66,62 @@ def format_fields(movie_info):
         else:
                 movie_info[i][6] = 0
         
-    print movie_info
-
     return movie_info
 
+
+def create_input(movie_info):
+    # don't want to cinlude movie_id, title in predicition
+    SKIP = 4
+    WIDTH = len(movie_info[0]) - SKIP
+    X = scipy.zeros((len(movie_info), WIDTH))
+    for i in range(0, len(movie_info)):
+        for j in range(SKIP, WIDTH):
+		try:
+	                X[i, j-SKIP] = movie_info[i][j] if movie_info[i][j] != '' else 0
+		except Exception:
+			pass
+    return X
+
+
+def create_output(movie_info):
+    Y = scipy.zeros(len(movie_info))
+    for i in range(0, len(movie_info)):
+        budget = movie_info[i][4]
+        gross = movie_info[i][6]
+        if gross > budget:
+            Y[i] = 1
+    print 'Number of successful movies', sum(Y)
+    return Y
+
+
+def test_classifier(clf, X, Y):
+    folds = StratifiedKFold(Y, 5)
+    aucs = []
+    for train, test in folds:
+        # Sizes
+        # print X[train].shape, Y[train].shape
+        # print X[test].shape, len(prediction)
+
+        clf.fit(X[train], Y[train])
+        prediction = clf.predict_proba(X[test])
+        aucs.append(roc_auc_score(Y[test], prediction[:, 1]))
+    print clf.__class__.__name__, aucs, numpy.mean(aucs)
+
+	
 def main():
     movie_info = load_movie_info()
+	
+    X = create_input(movie_info)
+    Y = create_output(movie_info)
+
+    clf = linear_model.SGDClassifier(loss='log')
+    test_classifier(clf, X, Y)
+
+    clf = GaussianNB()
+    test_classifier(clf, X, Y)
+
+    clf = RandomForestClassifier(n_estimators=10, max_depth=10)
+    test_classifier(clf, X, Y)
 
 
 if __name__ == '__main__':

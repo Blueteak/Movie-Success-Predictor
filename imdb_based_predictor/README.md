@@ -251,9 +251,6 @@ UPDATE movie_info_proj
         	   and movie_info.info='Thriller'
         	   )AS movie_info
 	 WHERE movie_info_proj.movie_id = movie_info.movie_id;
-    
-# Delete rows with null coulmn values
-#DELETE FROM movie_info_proj WHERE mpaa IS NULL or budget IS NULL or opening_weekend IS NULL or gross IS NULL;
 
 # Export table data to CSV
 \COPY movie_info_proj TO 'movie_info.csv' WITH CSV;

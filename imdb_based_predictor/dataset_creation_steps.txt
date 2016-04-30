@@ -23,11 +23,10 @@ psql imdb_project
 CREATE TABLE IF NOT EXISTS movie_info_proj (
     movie_id integer,
     title text,
-    mpaa text,
     country text,
+    mpaa text,
     budget text,
     opening_weekend text,
-    gross text,
     Action integer DEFAULT 0,
     Animation integer DEFAULT 0,
     Comedy integer DEFAULT 0,
@@ -36,7 +35,8 @@ CREATE TABLE IF NOT EXISTS movie_info_proj (
     Romance integer DEFAULT 0,
     Short integer DEFAULT 0,
     Horror integer DEFAULT 0,
-    Thriller integer  DEFAULT 0
+    Thriller integer  DEFAULT 0,
+    gross text
     );
     
 #Insert the records of type 'movie'(kind_type='movie') with contry information in the new dataset
@@ -252,11 +252,8 @@ UPDATE movie_info_proj
         	   )AS movie_info
 	 WHERE movie_info_proj.movie_id = movie_info.movie_id;
     
-# Delete rows with null coulmn values
-#DELETE FROM movie_info_proj WHERE mpaa IS NULL or budget IS NULL or opening_weekend IS NULL or gross IS NULL;
-
 # Export table data to CSV
 \COPY movie_info_proj TO 'movie_info.csv' WITH CSV;
 
 # CSV header
-movie_id,title,mpaa,country,budget,opening_weekend,gross,action,animation,comedy,drama,documentary,romance,short,horror,thriller
+movie_id,title,country,mpaa,budget,opening_weekend,action,animation,comedy,drama,documentary,romance,short,horror,thriller,gross

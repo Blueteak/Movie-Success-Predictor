@@ -24,20 +24,20 @@ def format_fields(movie_info):
     for i in range(0, len(movie_info)):
 
 	#extract mpaa rating from text value
-    	mpaa = movie_info[i][2]
+    	mpaa = movie_info[i][3]
         mpaa_rating = mpaa.split(' ')
 	if len(mpaa_rating) == 0:
-                movie_info[i][2] = 0
+                movie_info[i][3] = 0
 	elif mpaa_rating[0] =="Rated" and len(mpaa_rating)>0:
-		movie_info[i][2] = mpaa_rating[1]
+		movie_info[i][3] = mpaa_rating[1]
 	elif "R" in mpaa_rating:
-        	movie_info[i][2] = "R"
+        	movie_info[i][3] = "R"
 	elif "PG" in mpaa_rating:
-                movie_info[i][2] = "PG"
+                movie_info[i][3] = "PG"
 	elif "PG-13" in mpaa_rating:
-                movie_info[i][2] = "PG-13"
+                movie_info[i][3] = "PG-13"
 	else:
-		movie_info[i][2] = 0
+		movie_info[i][3] = 0
 	
 	#rmove $ sign from budget
 	budget = movie_info[i][4]
@@ -58,20 +58,20 @@ def format_fields(movie_info):
 		movie_info[i][5] = 0
 
 	#extract gross amount value
-        gross =  movie_info[i][6]
+        gross =  movie_info[i][15]
         gross_arr = gross.split(' ')
         if len(gross_arr) > 0 and len(gross_arr[0]) > 0 and gross_arr[0][0] == '$':
                 gross = gross_arr[0]
-                movie_info[i][6] = gross[1:]
+                movie_info[i][15] = gross[1:]
         else:
-                movie_info[i][6] = 0
+                movie_info[i][15] = 0
         
     return movie_info
 
 
 def create_input(movie_info):
-    # don't want to cinlude movie_id, title in predicition
-    SKIP = 4
+    # don't want to cinlude movie_id, title, country in predicition
+    SKIP = 3
     WIDTH = len(movie_info[0]) - SKIP
     X = scipy.zeros((len(movie_info), WIDTH))
     for i in range(0, len(movie_info)):
@@ -86,9 +86,9 @@ def create_input(movie_info):
 def create_output(movie_info):
     Y = scipy.zeros(len(movie_info))
     for i in range(0, len(movie_info)):
-        budget = movie_info[i][4]
-        gross = movie_info[i][6]
-        if gross > budget:
+        #budget = movie_info[i][4]
+        gross = movie_info[i][15]
+        if gross > 1000000:
             Y[i] = 1
     print 'Number of successful movies', sum(Y)
     return Y

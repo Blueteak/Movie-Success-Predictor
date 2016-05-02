@@ -1,10 +1,14 @@
 import scipy
 import numpy
 from sklearn import linear_model
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score,roc_curve,auc
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.cross_validation import StratifiedKFold
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import pylab
 
 def load_movie_info():
     f = open('movie_info.csv', 'r')
@@ -74,12 +78,14 @@ def create_input(movie_info):
     SKIP = 3
     WIDTH = len(movie_info[0]) - SKIP
     X = scipy.zeros((len(movie_info), WIDTH))
+    #print 'movie_info[366853][13]',movie_info[366832]
     for i in range(0, len(movie_info)):
         for j in range(SKIP, WIDTH):
 		try:
 	                X[i, j-SKIP] = movie_info[i][j] if movie_info[i][j] != '' else 0
 		except Exception:
 			pass
+    #print X[366832]
     return X
 
 
@@ -105,6 +111,22 @@ def test_classifier(clf, X, Y):
         clf.fit(X[train], Y[train])
         prediction = clf.predict_proba(X[test])
         aucs.append(roc_auc_score(Y[test], prediction[:, 1]))
+        
+	false_positive_rate, true_positive_rate, thresholds = roc_curve(Y[test], prediction[:, 1])
+	roc_auc = auc(false_positive_rate, true_positive_rate)
+	#plt.ion()
+	plt.title('Receiver Operating Characteristic')
+	plt.plot(false_positive_rate, true_positive_rate, 'b',
+	label='AUC = %0.2f'% roc_auc)
+	plt.legend(loc='lower right')
+	plt.plot([0,1],[0,1],'r--')
+	plt.xlim([0,1])
+	plt.ylim([0,1])
+	plt.ylabel('True Positive Rate')
+	plt.xlabel('False Positive Rate')
+	plt.show()
+	plt.savefig('plots/'+clf.__class__.__name__+'.png')
+    plt.clf()
     print clf.__class__.__name__, aucs, numpy.mean(aucs)
 
 	

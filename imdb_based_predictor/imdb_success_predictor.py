@@ -9,6 +9,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pylab
+from scipy import interp
 
 def load_movie_info():
     f = open('movie_info.csv', 'r')
@@ -130,8 +131,10 @@ def create_output_before_release(movie_info):
 
 def test_classifier(clf, X, Y, loc):
     folds = StratifiedKFold(Y, 5)
+    mean_tpr = 0.0
+    mean_fpr = numpy.linspace(0, 1, 100)
     aucs = []
-    for train, test in folds:
+    for i, (train, test) in enumerate(folds):
         # Sizes
         # print X[train].shape, Y[train].shape
         # print X[test].shape, len(prediction)
@@ -141,19 +144,26 @@ def test_classifier(clf, X, Y, loc):
         aucs.append(roc_auc_score(Y[test], prediction[:, 1]))
         
 	false_positive_rate, true_positive_rate, thresholds = roc_curve(Y[test], prediction[:, 1])
+        mean_tpr += interp(mean_fpr, false_positive_rate, true_positive_rate)
+        mean_tpr[0] = 0.0
 	roc_auc = auc(false_positive_rate, true_positive_rate)
-	#plt.ion()
-	plt.title('Receiver Operating Characteristic')
-	plt.plot(false_positive_rate, true_positive_rate, 'b',
-	label='AUC = %0.2f'% roc_auc)
-	plt.legend(loc='lower right')
-	plt.plot([0,1],[0,1],'r--')
-	plt.xlim([0,1])
-	plt.ylim([0,1])
-	plt.ylabel('True Positive Rate')
-	plt.xlabel('False Positive Rate')
-	plt.show()
-	plt.savefig('plots/'+loc+'/'+clf.__class__.__name__+'.png')
+	plt.plot(false_positive_rate, true_positive_rate, lw=1,
+	label='ROC fold %d (area = %0.2f)' % ( i, roc_auc))
+    plt.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='Luck')
+    mean_tpr /= len(folds)
+    mean_tpr[-1] = 1.0
+    mean_auc = auc(mean_fpr, mean_tpr)
+    plt.plot(mean_fpr, mean_tpr, 'k--',
+         label='Mean ROC (area = %0.2f)' % mean_auc, lw=2)
+
+    plt.title('Receiver Operating Characteristic')
+    plt.xlim([0,1])
+    plt.ylim([0,1])
+    plt.ylabel('True Positive Rate')
+    plt.xlabel('False Positive Rate')
+    plt.legend(loc='lower right')
+    plt.show()
+    plt.savefig('plots/'+loc+'/'+clf.__class__.__name__+'.png')
     plt.clf()
     print clf.__class__.__name__, aucs, numpy.mean(aucs)
 
@@ -174,7 +184,7 @@ def main():
 
     clf = RandomForestClassifier(n_estimators=10, max_depth=10)
     test_classifier(clf, X, Y, 'before_release')
-    
+   
     #After release
     movie_info = load_movie_info()
     print '***After release***'	

@@ -24,6 +24,24 @@ def load_movie_info():
     
     return movie_info 
 
+
+def load_movie_info_before_release():
+    f = open('movie_info.csv', 'r')
+    lines = f.readlines()
+    f.close()
+
+    movie_info = []
+    for line in lines:
+        line = line.strip()
+        movie_info.append(line.split(','))
+
+    movie_info = format_fields(movie_info)
+    for row in movie_info:
+        del row[5]
+
+    return movie_info
+
+
 def format_fields(movie_info):
     for i in range(0, len(movie_info)):
 
@@ -99,8 +117,18 @@ def create_output(movie_info):
     print 'Number of successful movies', sum(Y)
     return Y
 
+def create_output_before_release(movie_info):
+    Y = scipy.zeros(len(movie_info))
+    for i in range(0, len(movie_info)):
+        #budget = movie_info[i][4]
+        gross = movie_info[i][14]
+        if gross > 1000000:
+            Y[i] = 1
+    print 'Number of successful movies', sum(Y)
+    return Y
 
-def test_classifier(clf, X, Y):
+
+def test_classifier(clf, X, Y, loc):
     folds = StratifiedKFold(Y, 5)
     aucs = []
     for train, test in folds:
@@ -125,25 +153,43 @@ def test_classifier(clf, X, Y):
 	plt.ylabel('True Positive Rate')
 	plt.xlabel('False Positive Rate')
 	plt.show()
-	plt.savefig('plots/'+clf.__class__.__name__+'.png')
+	plt.savefig('plots/'+loc+'/'+clf.__class__.__name__+'.png')
     plt.clf()
     print clf.__class__.__name__, aucs, numpy.mean(aucs)
 
 	
 def main():
+    #before_release
+    movie_info_before_release = load_movie_info_before_release()
+    print '***Before release***'
+    
+    X = create_input(movie_info_before_release)
+    Y = create_output_before_release(movie_info_before_release)
+
+    clf = linear_model.SGDClassifier(loss='log')
+    test_classifier(clf, X, Y, 'before_release')
+
+    clf = GaussianNB()
+    test_classifier(clf, X, Y, 'before_release')
+
+    clf = RandomForestClassifier(n_estimators=10, max_depth=10)
+    test_classifier(clf, X, Y, 'before_release')
+    
+    #After release
     movie_info = load_movie_info()
-	
+    print '***After release***'	
+    
     X = create_input(movie_info)
     Y = create_output(movie_info)
 
     clf = linear_model.SGDClassifier(loss='log')
-    test_classifier(clf, X, Y)
+    test_classifier(clf, X, Y, 'after_release')
 
     clf = GaussianNB()
-    test_classifier(clf, X, Y)
+    test_classifier(clf, X, Y, 'after_release')
 
     clf = RandomForestClassifier(n_estimators=10, max_depth=10)
-    test_classifier(clf, X, Y)
+    test_classifier(clf, X, Y, 'after_release')
 
 
 if __name__ == '__main__':

@@ -62,7 +62,7 @@ def format_fields(movie_info):
 	else:
 		movie_info[i][3] = 0
 	
-	#rmove $ sign from budget
+	#remove $ sign from budget
 	budget = movie_info[i][4]
 	if len(budget) == 0:
 		movie_info[i][4] = 0
@@ -97,21 +97,18 @@ def create_input(movie_info):
     SKIP = 3
     WIDTH = len(movie_info[0]) - SKIP
     X = scipy.zeros((len(movie_info), WIDTH))
-    #print 'movie_info[366853][13]',movie_info[366832]
     for i in range(0, len(movie_info)):
         for j in range(SKIP, WIDTH):
 		try:
 	                X[i, j-SKIP] = movie_info[i][j] if movie_info[i][j] != '' else 0
 		except Exception:
 			pass
-    #print X[366832]
     return X
 
 
 def create_output(movie_info):
     Y = scipy.zeros(len(movie_info))
     for i in range(0, len(movie_info)):
-        #budget = movie_info[i][4]
         gross = movie_info[i][15]
         if gross > 1000000:
             Y[i] = 1
@@ -121,7 +118,6 @@ def create_output(movie_info):
 def create_output_before_release(movie_info):
     Y = scipy.zeros(len(movie_info))
     for i in range(0, len(movie_info)):
-        #budget = movie_info[i][4]
         gross = movie_info[i][14]
         if gross > 1000000:
             Y[i] = 1
@@ -134,11 +130,8 @@ def test_classifier(clf, X, Y, loc):
     mean_tpr = 0.0
     mean_fpr = numpy.linspace(0, 1, 100)
     aucs = []
-    for i, (train, test) in enumerate(folds):
-        # Sizes
-        # print X[train].shape, Y[train].shape
-        # print X[test].shape, len(prediction)
 
+    for i, (train, test) in enumerate(folds):
         clf.fit(X[train], Y[train])
         prediction = clf.predict_proba(X[test])
         aucs.append(roc_auc_score(Y[test], prediction[:, 1]))

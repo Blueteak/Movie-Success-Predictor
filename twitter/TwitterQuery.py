@@ -44,26 +44,50 @@ def get_tweets(api,name,max_id=None):
             else:
                 tweets = api.search(q=name,lang='en',count=100,max_id=max_id)
             ratelimit = False
-        except tweepy.error.RateLimitError:
-            print 'RateLimitError, trying again in 60 seconds'
+        except tweepy.error.TweepError:
+            print 'TweepError, trying again in 60 seconds'
             time.sleep(60)
     return tweets
 
 def twitter_search(movie,api,ia):
     
-    s_result = ia.search_movie(movie)
-
+    error = True
+    while error:
+        try:
+            s_result = ia.search_movie(movie)
+            error = False
+        except:
+            print 'Database error, trying again'
+            api,ia = get_twitter_imdb_access()
+    
+    if len(s_result) == 0:
+        return [(0.0,0.0,0),(0.0,0.0,0)]
     mov = s_result[0]
-    ia.update(mov)
+    error = True
+    while error:
+        try:
+            mov = ia.get_movie(mov.movieID)
+            if mov['title'] == 'How Did You Get Here?':
+                print 'IMDbPY error, trying again'
+                api,ia = get_twitter_imdb_access()
+            else:
+                error = False
+        except:
+            print 'IMDbPY error, trying again'
+            api,ia = get_twitter_imdb_access()
+    #ia.update(mov)
 
     result = []
     for i in range(2):
         name = ''
-        if i == 0:
-            name = mov['cast'][0]['name']
-        else:
-            name = mov['director'][0]['name']
-
+        try:
+            if i == 0:
+                name = mov['cast'][0]['name']
+            else:
+                name = mov['director'][0]['name']
+        except:
+            result.append((0.0,0.0,0))
+            continue
         count,pol,sub = 0,0.0,0.0
         max_id = None
         for p in range(10):
@@ -79,18 +103,25 @@ def twitter_search(movie,api,ia):
             if count == MAX_TWEETS: break
 
         #if they don't get to MAX_TWEETS, just assume they did
-
-        users = api.search_users(q=name)
+        ratelimit = True
+        users = None
+        while ratelimit:
+            try:
+                users = api.search_users(q=name)
+                ratelimit = False
+            except tweepy.error.TweepError:
+                print 'TweepError, trying again in 60 seconds'
+                
         followers = 0
-        if users[0].verified:
+        if len(users) > 0 and users[0].verified:
             followers = users[0].followers_count
 
         result.append((pol,sub,followers))
-        print name
-        print 'Polarity:\t',pol
-        print 'Subjectivity:\t',sub
-        print 'Count:\t\t',count
-        print 'Followers:\t',followers
+        #print name
+        #print 'Polarity:\t',pol
+        #print 'Subjectivity:\t',sub
+        #print 'Count:\t\t',count
+        #print 'Followers:\t',followers
 
     return result
 

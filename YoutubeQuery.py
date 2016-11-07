@@ -22,8 +22,8 @@ def NormalizedValues(stats, budget):
 	fcNorm = stat["favoriteCount"]/budget
 	ccNorm = stat["commentCount"]
 	ldRatio = 0
-	if(stat["likeCount"] > 0)
-		ldRatio = stat["likeCount"]/(stat["likeCount"]+stat["dislikeCount"]
+	if(stat["likeCount"] > 0):
+		ldRatio = stat["likeCount"]/(stat["likeCount"]+stat["dislikeCount"])
 	data = {}
 	data["view_count_norm"] = vcNorm
 	data["like_dislike_ratio"] = ldRatio
